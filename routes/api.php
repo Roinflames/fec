@@ -21,10 +21,11 @@ Route::middleware('auth:api')->group(function () {
 
     // Carrito
     Route::prefix('carrito')->group(function () {
-        Route::get('/',        [CarritoController::class, 'index']);
-        Route::post('/add',    [CarritoController::class, 'add']);
-        Route::post('/remove', [CarritoController::class, 'remove']);
-        Route::post('/clear',  [CarritoController::class, 'clear']);
+        Route::get('/',          [CarritoController::class, 'index']);
+        Route::post('/add',      [CarritoController::class, 'add']);
+        Route::post('/remove',   [CarritoController::class, 'remove']);
+        Route::post('/clear',    [CarritoController::class, 'clear']);
+        Route::post('/actualizar', [CarritoController::class, 'updateCantidad']);
     });
 
     // Órdenes

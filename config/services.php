@@ -13,6 +13,12 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'flow' => [
+        'api_key'     => env('FLOW_API_KEY'),
+        'secret_key'  => env('FLOW_SECRET_KEY'),
+        'api_url'     => env('FLOW_API_URL'),
+        'return_url'  => env('FLOW_RETURN_URL'),
+    ],
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
