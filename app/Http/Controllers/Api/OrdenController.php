@@ -8,6 +8,7 @@ use App\Models\Orden;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Services\FlowApi;
 
 class OrdenController extends Controller
 {
@@ -50,7 +51,7 @@ class OrdenController extends Controller
         $carrito->productos()->detach();
 
         // Instanciar Flow
-        $flow = new \Flow\FlowApi([
+        $flow = new FlowApi([
             "apiKey"    => config('services.flow.api_key'),
             "secretKey" => config('services.flow.secret_key'),
             "url"       => config('services.flow.api_url'),
@@ -81,16 +82,14 @@ class OrdenController extends Controller
         $datos = $request->all();
         Log::info('Callback recibido de Flow', $datos);
 
-        // Validación básica
         if (!isset($datos['commerceOrder'], $datos['status'], $datos['s'])) {
             return response('Datos incompletos', 400);
         }
 
-        // Verificar firma
         $firmaLocal = hash_hmac(
             'sha256',
             http_build_query(collect($datos)->except('s')->sort()->toArray()),
-            config('services.flow.secret_key') // asegúrate de usar el mismo nombre que en config/services.php
+            config('services.flow.secret_key')
         );
 
         if (!hash_equals($firmaLocal, $datos['s'])) {
