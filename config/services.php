@@ -15,7 +15,7 @@ return [
     */
     'flow' => [
         'api_key'     => env('FLOW_API_KEY'),
-        'secret_key'  => env('FLOW_SECRET_KEY'),
+        'secret_key' => env('FLOW_SECRET'), // ✅ esto sí existe
         'api_url'     => env('FLOW_API_URL'),
         'return_url'  => env('FLOW_RETURN_URL'),
     ],

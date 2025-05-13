@@ -26,7 +26,8 @@ class Orden extends Model
     public function productos(): BelongsToMany
     {
         return $this->belongsToMany(Producto::class, 'orden_producto')
-                    ->withPivot('cantidad', 'precio_unitario')
+                    ->withPivot('cantidad', 'precio_unitario', 'subtotal')
                     ->withTimestamps();
     }
+
 }
