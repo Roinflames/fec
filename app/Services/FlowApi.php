@@ -1,34 +1,112 @@
 <?php
 
-namespace App\Services;
+namespace App\Http\Controllers\Api;
 
-use GuzzleHttp\Client;
+use App\Http\Controllers\Controller;
+use App\Models\Carrito;
+use App\Models\Orden;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Services\FlowApi;
 
-class FlowApi
+class OrdenController extends Controller
 {
-    protected $apiKey;
-    protected $secretKey;
-    protected $apiUrl;
-    protected $client;
-
-    public function __construct(array $config)
+    /**
+     * Crear una orden desde el carrito y redirigir a Flow.
+     */
+    public function crearOrdenDesdeCarrito()
     {
-        $this->apiKey    = $config['apiKey'];
-        $this->secretKey = $config['secretKey'];
-        $this->apiUrl    = $config['url'];
-        $this->client    = new Client();
-    }
+        $usuario = Auth::user();
+        $carrito = $usuario->carrito()->with('productos')->first();
 
-    public function send($endpoint, array $params)
-    {
-        $params['apiKey'] = $this->apiKey;
-        ksort($params);
-        $params['s'] = hash_hmac('sha256', http_build_query($params), $this->secretKey);
+        if (!$carrito || $carrito->productos->isEmpty()) {
+            return response()->json(['message' => 'Carrito vacío'], 400);
+        }
 
-        $response = $this->client->post($this->apiUrl . '/' . $endpoint, [
-            'form_params' => $params,
+        // Crear la orden vacía
+        $orden = $usuario->ordenes()->create([
+            'estado' => 'pendiente',
+            'total'  => 0
         ]);
 
-        return json_decode($response->getBody(), true);
+        $total = 0;
+
+        foreach ($carrito->productos as $producto) {
+            $subtotal = $producto->precio * $producto->pivot->cantidad;
+
+            $orden->productos()->attach($producto->id, [
+                'cantidad'        => $producto->pivot->cantidad,
+                'precio_unitario' => $producto->precio,
+                'subtotal'        => $subtotal,
+            ]);
+
+            $total += $subtotal;
+        }
+
+        // Actualizar total en la orden
+        $orden->update(['total' => $total]);
+
+        // Vaciar el carrito
+        $carrito->productos()->detach();
+
+        // Instanciar Flow
+        $flow = new FlowApi([
+            "apiKey"    => config('services.flow.api_key'),
+            "secretKey" => config('services.flow.secret_key'),
+            "url"       => config('services.flow.api_url'),
+        ]);
+
+        $response = $flow->send("payment/create", [
+            "commerceOrder" => $orden->id,
+            "subject"       => "Pago Ferremas",
+            "currency"      => "CLP",
+            "amount"        => $total,
+            "email"         => $usuario->email,
+            "urlReturn"     => config('services.flow.return_url'),
+            "urlCallback"   => config('services.flow.callback_url'),
+        ]);
+
+        return response()->json([
+            'message'   => 'Orden creada',
+            'orden_id'  => $orden->id,
+            'url_pago'  => $response['url']
+        ]);
+    }
+
+    /**
+     * Callback de Flow para actualizar estado de orden.
+     */
+    public function flowCallback(Request $request)
+    {
+        $datos = $request->all();
+        Log::info('Callback recibido de Flow', $datos);
+
+        if (!isset($datos['commerceOrder'], $datos['status'], $datos['s'])) {
+            return response('Datos incompletos', 400);
+        }
+
+        $firmaLocal = hash_hmac(
+            'sha256',
+            http_build_query(collect($datos)->except('s')->sort()->toArray()),
+            config('services.flow.secret_key')
+        );
+
+        if (!hash_equals($firmaLocal, $datos['s'])) {
+            Log::warning('Firma inválida en callback de Flow');
+            return response('Firma inválida', 403);
+        }
+
+        $orden = Orden::find($datos['commerceOrder']);
+
+        if (!$orden) {
+            return response('Orden no encontrada', 404);
+        }
+
+        $orden->estado = $datos['status'] === 'AUTHORIZED' ? 'pagado' : 'fallido';
+        $orden->flow_order_id = $datos['flowOrder'] ?? null;
+        $orden->save();
+
+        return response('OK', 200);
     }
 }

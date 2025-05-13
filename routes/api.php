@@ -12,25 +12,28 @@ Route::get('/debug-productos', function () {
     return \App\Models\Producto::all();
 });
 
+// Autenticación
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 
+// Rutas protegidas con auth:api
 Route::middleware('auth:api')->group(function () {
+
     Route::get('/user',    [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
     // Carrito
     Route::prefix('carrito')->group(function () {
-        Route::get('/',          [CarritoController::class, 'index']);
-        Route::post('/add',      [CarritoController::class, 'add']);
-        Route::post('/remove',   [CarritoController::class, 'remove']);
-        Route::post('/clear',    [CarritoController::class, 'clear']);
+        Route::get('/',            [CarritoController::class, 'index']);
+        Route::post('/add',        [CarritoController::class, 'add']);
+        Route::post('/remove',     [CarritoController::class, 'remove']);
+        Route::post('/clear',      [CarritoController::class, 'clear']);
         Route::post('/actualizar', [CarritoController::class, 'updateCantidad']);
     });
 
-    // Órdenes
+    // Órdenes y pagos
     Route::post('/orden/crear', [OrdenController::class, 'crearOrdenDesdeCarrito']);
 });
 
-// Callback de Flow (no requiere token, es llamado externo)
+// Callback de Flow (exento de autenticación)
 Route::post('/flow/callback', [OrdenController::class, 'flowCallback']);
