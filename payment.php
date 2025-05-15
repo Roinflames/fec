@@ -9,8 +9,8 @@ $subject = 'Pago de prueba desde PHP';
 $currency = 'CLP';
 $amount = '1000';
 $email = 'rod.reyes.s@gmail.com';
-$urlReturn = 'https://tuweb.cl/retorno';
-$urlConfirmation = 'https://tuweb.cl/notificacion';
+$urlReturn = 'https://comunidadvirtual.cl/retorno';
+$urlConfirmation = 'https://comunidadvirtual.cl/notificacion';
 
 // Construir el mensaje en orden alfabético, sin urlencode
 $message =
