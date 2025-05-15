@@ -8,7 +8,7 @@ use App\Models\Orden;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Services\FlowApi;
+use GuzzleHttp\Client;
 
 class OrdenController extends Controller
 {
@@ -24,10 +24,10 @@ class OrdenController extends Controller
             return response()->json(['message' => 'Carrito vacío'], 400);
         }
 
-        // Crear la orden vacía
+        // Crear orden inicial
         $orden = $usuario->ordenes()->create([
             'estado' => 'pendiente',
-            'total'  => 0
+            'total' => 0
         ]);
 
         $total = 0;
@@ -36,46 +36,78 @@ class OrdenController extends Controller
             $subtotal = $producto->precio * $producto->pivot->cantidad;
 
             $orden->productos()->attach($producto->id, [
-                'cantidad'        => $producto->pivot->cantidad,
+                'cantidad' => $producto->pivot->cantidad,
                 'precio_unitario' => $producto->precio,
-                'subtotal'        => $subtotal,
+                'subtotal' => $subtotal,
             ]);
 
             $total += $subtotal;
         }
 
-        // Actualizar total en la orden
+        // Actualizar total
         $orden->update(['total' => $total]);
 
-        // Vaciar el carrito
+        // Vaciar carrito
         $carrito->productos()->detach();
 
-        // Instanciar Flow
-        $flow = new FlowApi([
-            "apiKey"    => config('services.flow.api_key'),
-            "secretKey" => config('services.flow.secret_key'),
-            "url"       => config('services.flow.api_url'),
-        ]);
+        // Preparar credenciales fijas (en duro)
+        $apiKey = '1F522BCF-2CB5-45F9-8EA4-8016C933L426';
+        $secretKey = '8d7c176d79c7811e3406cab4edb699914d6341ce';
+        $subject = 'Pago de prueba desde Laravel';
+        $currency = 'CLP';
+        $email = $usuario->email;
+        $urlReturn = 'https://comunidadvirtual.cl/retorno.php';
+        $urlCallback = 'https://comunidadvirtual.cl/notificacion.php';
+        $commerceOrder = $orden->id;
 
-        $response = $flow->send("payment/create", [
-            "commerceOrder" => $orden->id,
-            "subject"       => "Pago Ferremas",
-            "currency"      => "CLP",
-            "amount"        => $total,
-            "email"         => $usuario->email,
-            "urlReturn"     => config('services.flow.return_url'),
-            "urlCallback"   => url('/api/flow/callback'),
-        ]);
+        // Crear string para la firma
+        $message =
+            'amount=' . $total .
+            '&apiKey=' . $apiKey .
+            '&commerceOrder=' . $commerceOrder .
+            '&currency=' . $currency .
+            '&email=' . $email .
+            '&subject=' . $subject .
+            '&urlConfirmation=' . $urlCallback .
+            '&urlReturn=' . $urlReturn;
 
-        return response()->json([
-            'message'   => 'Orden creada',
-            'orden_id'  => $orden->id,
-            'url_pago'  => $response['url']
-        ]);
+        $signature = hash_hmac('sha256', $message, $secretKey);
+
+        $params = [
+            'apiKey' => $apiKey,
+            'commerceOrder' => $commerceOrder,
+            'subject' => $subject,
+            'currency' => $currency,
+            'amount' => $total,
+            'email' => $email,
+            'urlReturn' => $urlReturn,
+            'urlConfirmation' => $urlCallback,
+            's' => $signature,
+        ];
+
+        try {
+            $client = new Client();
+            $response = $client->post('https://sandbox.flow.cl/api/payment/create', [
+                'form_params' => $params,
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+
+            return response()->json([
+                'message' => 'Orden creada',
+                'orden_id' => $orden->id,
+                'url_pago' => $data['url'] . '?token=' . $data['token'],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error al crear pago con Flow: ' . $e->getMessage());
+            return response()->json(['message' => 'Error al conectar con Flow'], 500);
+        }
+        Log::info('Respuesta de Flow:', $response);
+
     }
 
     /**
-     * Callback de Flow para actualizar estado de orden.
+     * Callback de Flow (confirmación de pago).
      */
     public function flowCallback(Request $request)
     {
@@ -86,19 +118,19 @@ class OrdenController extends Controller
             return response('Datos incompletos', 400);
         }
 
+        $secretKey = '8d7c176d79c7811e3406cab4edb699914d6341ce';
         $firmaLocal = hash_hmac(
             'sha256',
             http_build_query(collect($datos)->except('s')->sort()->toArray()),
-            config('services.flow.secret_key')
+            $secretKey
         );
 
         if (!hash_equals($firmaLocal, $datos['s'])) {
-            Log::warning('Firma inválida en callback de Flow');
+            Log::warning('Firma inválida en callback');
             return response('Firma inválida', 403);
         }
 
         $orden = Orden::find($datos['commerceOrder']);
-
         if (!$orden) {
             return response('Orden no encontrada', 404);
         }

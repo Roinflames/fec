@@ -2,26 +2,6 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Third Party Services
-    |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
-    |
-    */
-    'flow' => [
-        'api_key'      => env('FLOW_API_KEY'),
-        'secret_key'   => env('FLOW_SECRET'),
-        'api_url'      => env('FLOW_API_URL'),
-        'return_url'   => env('FLOW_RETURN_URL'),
-        'callback_url' => env('FLOW_CALLBACK_URL'),
-    ],
-
-
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
