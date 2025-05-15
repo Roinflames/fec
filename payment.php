@@ -48,10 +48,15 @@ curl_close($ch);
 
 // Mostrar resultado
 $result = json_decode($response, true);
-if (isset($result['url'])) {
-    echo "Redireccionar al cliente a: " . $result['url'];
+// Asumiendo $result es el arreglo decodificado
+if (isset($result['url']) && isset($result['token'])) {
+    $urlConToken = $result['url'] . '?token=' . $result['token'];
+    echo "Abre esta URL en tu navegador para continuar con el pago:\n";
+    echo $urlConToken . "\n";
 } else {
     echo "Error en la creación del pago:\n";
     print_r($result);
 }
+
+
 ?>
