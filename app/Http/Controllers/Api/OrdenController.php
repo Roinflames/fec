@@ -15,6 +15,97 @@ class OrdenController extends Controller
     /**
      * Crear una orden desde el carrito y redirigir a Flow.
      */
+    // public function crearOrdenDesdeCarrito()
+    // {
+    //     $usuario = Auth::user();
+    //     $carrito = $usuario->carrito()->with('productos')->first();
+
+    //     if (!$carrito || $carrito->productos->isEmpty()) {
+    //         return response()->json(['message' => 'Carrito vacío'], 400);
+    //     }
+
+    //     // Crear orden inicial
+    //     $orden = $usuario->ordenes()->create([
+    //         'estado' => 'pendiente',
+    //         'total' => 0
+    //     ]);
+
+    //     $total = 0;
+
+    //     foreach ($carrito->productos as $producto) {
+    //         $subtotal = $producto->precio * $producto->pivot->cantidad;
+
+    //         $orden->productos()->attach($producto->id, [
+    //             'cantidad' => $producto->pivot->cantidad,
+    //             'precio_unitario' => $producto->precio,
+    //             'subtotal' => $subtotal,
+    //         ]);
+
+    //         $total += $subtotal;
+    //     }
+
+    //     // Actualizar total
+    //     $orden->update(['total' => $total]);
+
+    //     // Vaciar carrito
+    //     $carrito->productos()->detach();
+
+    //     // Preparar credenciales fijas (en duro)
+    //     $apiKey = '1F522BCF-2CB5-45F9-8EA4-8016C933L426';
+    //     $secretKey = '8d7c176d79c7811e3406cab4edb699914d6341ce';
+    //     $subject = 'Pago de prueba desde Laravel';
+    //     $currency = 'CLP';
+    //     $email = $usuario->email;
+    //     $urlReturn = 'https://comunidadvirtual.cl/retorno.php';
+    //     $urlCallback = 'https://comunidadvirtual.cl/notificacion.php';
+    //     $commerceOrder = $orden->id;
+
+    //     // Crear string para la firma
+    //     $message =
+    //         'amount=' . $total .
+    //         '&apiKey=' . $apiKey .
+    //         '&commerceOrder=' . $commerceOrder .
+    //         '&currency=' . $currency .
+    //         '&email=' . $email .
+    //         '&subject=' . $subject .
+    //         '&urlConfirmation=' . $urlCallback .
+    //         '&urlReturn=' . $urlReturn;
+
+    //     $signature = hash_hmac('sha256', $message, $secretKey);
+
+    //     $params = [
+    //         'apiKey' => $apiKey,
+    //         'commerceOrder' => $commerceOrder,
+    //         'subject' => $subject,
+    //         'currency' => $currency,
+    //         'amount' => $total,
+    //         'email' => $email,
+    //         'urlReturn' => $urlReturn,
+    //         'urlConfirmation' => $urlCallback,
+    //         's' => $signature,
+    //     ];
+
+    //     try {
+    //         $client = new Client();
+    //         $response = $client->post('https://sandbox.flow.cl/api/payment/create', [
+    //             'form_params' => $params,
+    //         ]);
+
+    //         $data = json_decode($response->getBody(), true);
+
+    //         return response()->json([
+    //             'message' => 'Orden creada',
+    //             'orden_id' => $orden->id,
+    //             'url_pago' => $data['url'] . '?token=' . $data['token'],
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         Log::error('Error al crear pago con Flow: ' . $e->getMessage());
+    //         return response()->json(['message' => 'Error al conectar con Flow'], 500);
+    //     }
+    //     Log::info('Respuesta de Flow:', $response);
+
+    // }
+
     public function crearOrdenDesdeCarrito()
     {
         $usuario = Auth::user();
@@ -44,13 +135,12 @@ class OrdenController extends Controller
             $total += $subtotal;
         }
 
-        // Actualizar total
         $orden->update(['total' => $total]);
 
         // Vaciar carrito
         $carrito->productos()->detach();
 
-        // Preparar credenciales fijas (en duro)
+        // === Flow ===
         $apiKey = '1F522BCF-2CB5-45F9-8EA4-8016C933L426';
         $secretKey = '8d7c176d79c7811e3406cab4edb699914d6341ce';
         $subject = 'Pago de prueba desde Laravel';
@@ -59,10 +149,11 @@ class OrdenController extends Controller
         $urlReturn = 'https://comunidadvirtual.cl/retorno.php';
         $urlCallback = 'https://comunidadvirtual.cl/notificacion.php';
         $commerceOrder = $orden->id;
+        $amount = (string) intval($total); // ✅ importante: entero como string
 
-        // Crear string para la firma
+        // Crear firma
         $message =
-            'amount=' . $total .
+            'amount=' . $amount .
             '&apiKey=' . $apiKey .
             '&commerceOrder=' . $commerceOrder .
             '&currency=' . $currency .
@@ -78,7 +169,7 @@ class OrdenController extends Controller
             'commerceOrder' => $commerceOrder,
             'subject' => $subject,
             'currency' => $currency,
-            'amount' => $total,
+            'amount' => $amount,
             'email' => $email,
             'urlReturn' => $urlReturn,
             'urlConfirmation' => $urlCallback,
@@ -86,12 +177,14 @@ class OrdenController extends Controller
         ];
 
         try {
-            $client = new Client();
+            $client = new \GuzzleHttp\Client();
             $response = $client->post('https://sandbox.flow.cl/api/payment/create', [
                 'form_params' => $params,
             ]);
 
             $data = json_decode($response->getBody(), true);
+
+            Log::info('Respuesta de Flow', ['response' => $data]);
 
             return response()->json([
                 'message' => 'Orden creada',
@@ -99,11 +192,12 @@ class OrdenController extends Controller
                 'url_pago' => $data['url'] . '?token=' . $data['token'],
             ]);
         } catch (\Exception $e) {
-            Log::error('Error al crear pago con Flow: ' . $e->getMessage());
+            Log::error('Error al crear pago con Flow', [
+                'exception' => $e->getMessage(),
+                'params' => $params,
+            ]);
             return response()->json(['message' => 'Error al conectar con Flow'], 500);
         }
-        Log::info('Respuesta de Flow:', $response);
-
     }
 
     /**
