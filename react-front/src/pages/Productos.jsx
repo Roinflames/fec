@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 const Productos = () => {
   const { token } = useAuth();
   const [productos, setProductos] = useState([]);
@@ -13,7 +15,7 @@ const Productos = () => {
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/productos', {
+        const response = await fetch(`${API_URL}/productos`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',
@@ -37,7 +39,7 @@ const Productos = () => {
   const agregarAlCarrito = async (productoId) => {
     setMensaje('');
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/carrito/add', {
+      const response = await fetch(`${API_URL}/carrito/add`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -64,7 +66,7 @@ const Productos = () => {
   // 📦 Obtener carrito
   const obtenerCarrito = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/carrito', {
+      const response = await fetch(`${API_URL}/carrito`, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
@@ -85,7 +87,7 @@ const Productos = () => {
   // ❌ Eliminar producto del carrito
   const eliminarDelCarrito = async (productoId) => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/carrito/remove', {
+      const response = await fetch(`${API_URL}/carrito/remove`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -111,7 +113,7 @@ const Productos = () => {
   // 💳 Crear orden en Laravel y redirigir a Flow
   const pagarOrden = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/orden/crear', {
+      const response = await fetch(`${API_URL}/orden/crear`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
