@@ -114,10 +114,10 @@ const Productos = () => {
 
     const apiKey = '1F522BCF-2CB5-45F9-8EA4-8016C933L426';
     const secretKey = '8d7c176d79c7811e3406cab4edb699914d6341ce';
-    const commerceOrder = Date.now(); // puedes usar ID real si lo tienes
-    const subject = 'Pago de prueba desde React';
+    const commerceOrder = Date.now();
+    const subject = 'Pago Ferremas';
     const currency = 'CLP';
-    const amount = total.toFixed(2); // string decimal
+    const amount = total.toFixed(2); // siempre string decimal
     const email = 'rod.reyes.s@gmail.com';
     const urlReturn = 'https://comunidadvirtual.cl/retorno.php';
     const urlConfirmation = 'https://comunidadvirtual.cl/notificacion.php';
@@ -133,22 +133,24 @@ const Productos = () => {
       urlReturn,
     };
 
-    const concatenado = Object.keys(params)
+    // Concatenar alfabéticamente
+    const ordenConcatenada = Object.keys(params)
       .sort()
       .map((key) => `${key}=${params[key]}`)
       .join('&');
 
-    const textoAFirmar = concatenado + secretKey;
+    const textoAFirmar = ordenConcatenada + secretKey;
 
+    // SHA-256 con Web Crypto API
     const encoder = new TextEncoder();
     const data = encoder.encode(textoAFirmar);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const signature = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 
-    const url = `https://sandbox.flow.cl/app/web/pay.php?${concatenado}&s=${signature}`;
+    const url = `https://sandbox.flow.cl/app/web/pay.php?${ordenConcatenada}&s=${signature}`;
 
-    console.log('🔗 URL a redirigir:', url);
+    console.log('🔗 Redirigiendo a Flow:', url);
     window.location.href = url;
   };
 
