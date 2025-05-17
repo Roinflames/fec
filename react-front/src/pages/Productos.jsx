@@ -108,50 +108,31 @@ const Productos = () => {
     }
   };
 
-  // 💳 Crear orden y redirigir a Flow (firmada correctamente)
+  // 💳 Crear orden en Laravel y redirigir a Flow
   const pagarOrden = async () => {
-    const total = carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/orden/crear', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({}) // puedes enviar vacío si Laravel no espera parámetros
+      });
 
-    const apiKey = '1F522BCF-2CB5-45F9-8EA4-8016C933L426';
-    const secretKey = '8d7c176d79c7811e3406cab4edb699914d6341ce';
-    const commerceOrder = Date.now();
-    const subject = 'Pago Ferremas';
-    const currency = 'CLP';
-    const amount = total.toFixed(2); // siempre string decimal
-    const email = 'rod.reyes.s@gmail.com';
-    const urlReturn = 'https://comunidadvirtual.cl/retorno.php';
-    const urlConfirmation = 'https://comunidadvirtual.cl/notificacion.php';
+      const data = await response.json();
 
-    const params = {
-      amount,
-      apiKey,
-      commerceOrder,
-      currency,
-      email,
-      subject,
-      urlConfirmation,
-      urlReturn,
-    };
-
-    // Concatenar alfabéticamente
-    const ordenConcatenada = Object.keys(params)
-      .sort()
-      .map((key) => `${key}=${params[key]}`)
-      .join('&');
-
-    const textoAFirmar = ordenConcatenada + secretKey;
-
-    // SHA-256 con Web Crypto API
-    const encoder = new TextEncoder();
-    const data = encoder.encode(textoAFirmar);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const signature = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-
-    const url = `https://sandbox.flow.cl/app/web/pay.php?${ordenConcatenada}&s=${signature}`;
-
-    console.log('🔗 Redirigiendo a Flow:', url);
-    window.location.href = url;
+      if (response.ok && data.url_pago) {
+        console.log('🔗 Redirigiendo a:', data.url_pago);
+        window.location.href = data.url_pago;
+      } else {
+        setMensaje(data.message || 'No se pudo iniciar el pago');
+      }
+    } catch (err) {
+      console.error('❌ Error al pagar:', err);
+      setMensaje('Error al conectar con Flow');
+    }
   };
 
   return (
@@ -191,6 +172,7 @@ const Productos = () => {
         ))}
       </ul>
 
+      {/* Mostrar productos del carrito */}
       {mostrarCarrito && (
         <div style={{ marginTop: '2rem' }}>
           <h2>Carrito de compras</h2>
