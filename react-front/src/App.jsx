@@ -4,12 +4,14 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Carrito from './pages/Carrito';
 import Pago from './pages/Pago';
-import Productos from './pages/Productos'; // ← Confirmado con export default
-import PrivateRoute from './components/PrivateRoute'; // ← Confirmado funcional
+import Productos from './pages/Productos';
+import PrivateRoute from './components/PrivateRoute';
+import Navbar from './components/Navbar'; // ✅ importado
 
 function App() {
   return (
     <Router>
+      <Navbar /> {/* ✅ Navbar fijo arriba */}
       <Routes>
         {/* Públicas */}
         <Route path="/" element={<Home />} />

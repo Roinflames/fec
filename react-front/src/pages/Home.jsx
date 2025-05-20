@@ -1,3 +1,4 @@
+import { Box, Button, Heading, Stack, Text } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -5,33 +6,35 @@ const Home = () => {
   const { token, logout } = useAuth();
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Bienvenido a Ferremas</h1>
+    <Box maxW="xl" mx="auto" mt={10} p={6} textAlign="center">
+      <Heading mb={4} color="blue.700">Bienvenido a Ferremas</Heading>
 
       {token ? (
         <>
-          <p>Sesión iniciada ✅</p>
-          <nav>
-            <Link to="/productos">
-              <button style={{ marginRight: '1rem' }}>Ver productos</button>
-            </Link>
-            <button onClick={logout}>Cerrar sesión</button>
-          </nav>
+          <Text color="green.600" mb={4}>Sesión iniciada ✅</Text>
+          <Stack direction="row" spacing={4} justify="center">
+            <Button as={Link} to="/productos" colorScheme="blue">
+              Ver productos
+            </Button>
+            <Button colorScheme="red" onClick={logout}>
+              Cerrar sesión
+            </Button>
+          </Stack>
         </>
       ) : (
         <>
-          <p>No has iniciado sesión</p>
-          <nav>
-            <Link to="/login">
-              <button style={{ marginRight: '1rem' }}>Iniciar sesión</button>
-            </Link>
-            <Link to="/register">
-              <button>Registrarse</button>
-            </Link>
-          </nav>
+          <Text color="gray.600" mb={4}>No has iniciado sesión</Text>
+          <Stack direction="row" spacing={4} justify="center">
+            <Button as={Link} to="/login" colorScheme="green">
+              Iniciar sesión
+            </Button>
+            <Button as={Link} to="/register" colorScheme="purple">
+              Registrarse
+            </Button>
+          </Stack>
         </>
       )}
-    </div>
+    </Box>
   );
 };
 

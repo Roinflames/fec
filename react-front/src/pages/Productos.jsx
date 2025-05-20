@@ -1,3 +1,23 @@
+import {
+  Box,
+  Button,
+  Card,
+  CardBody,
+  CardFooter,
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerOverlay,
+  Heading,
+  Image,
+  SimpleGrid,
+  Stack,
+  Text,
+  useDisclosure,
+  useToast,
+} from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
@@ -5,13 +25,13 @@ const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 const Productos = () => {
   const { token } = useAuth();
+  const toast = useToast();
   const [productos, setProductos] = useState([]);
   const [carrito, setCarrito] = useState([]);
-  const [mostrarCarrito, setMostrarCarrito] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
-  // 🔄 Cargar productos
   useEffect(() => {
     const fetchProductos = async () => {
       try {
@@ -35,7 +55,6 @@ const Productos = () => {
     fetchProductos();
   }, [token]);
 
-  // 🛒 Agregar producto al carrito
   const agregarAlCarrito = async (productoId) => {
     setMensaje('');
     try {
@@ -46,15 +65,18 @@ const Productos = () => {
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        body: JSON.stringify({
-          producto_id: productoId,
-          cantidad: 1,
-        }),
+        body: JSON.stringify({ producto_id: productoId, cantidad: 1 }),
       });
 
       const data = await response.json();
       if (response.ok) {
-        setMensaje('Producto agregado al carrito 🛒');
+        toast({
+          title: 'Producto agregado',
+          description: 'Se agregó al carrito 🛒',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
       } else {
         setMensaje(data.message || 'Error al agregar producto');
       }
@@ -63,8 +85,9 @@ const Productos = () => {
     }
   };
 
-  // 📦 Obtener carrito
-  const obtenerCarrito = async () => {
+  const handleAbrirCarrito = async () => {
+    onOpen(); // 🔓 Abrir inmediatamente
+
     try {
       const response = await fetch(`${API_URL}/carrito`, {
         headers: {
@@ -75,16 +98,25 @@ const Productos = () => {
       const data = await response.json();
       if (response.ok) {
         setCarrito(data.productos || []);
-        setMostrarCarrito(true);
       } else {
-        setMensaje(data.message || 'Error al cargar el carrito');
+        toast({
+          title: 'Error al cargar el carrito',
+          description: data.message,
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
       }
     } catch (err) {
-      setMensaje('No se pudo conectar al obtener el carrito');
+      toast({
+        title: 'Error al conectar con el servidor',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
-  // ❌ Eliminar producto del carrito
   const eliminarDelCarrito = async (productoId) => {
     try {
       const response = await fetch(`${API_URL}/carrito/remove`, {
@@ -100,8 +132,13 @@ const Productos = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setMensaje('Producto eliminado del carrito');
-        obtenerCarrito(); // Recargar carrito
+        toast({
+          title: 'Producto eliminado',
+          status: 'info',
+          duration: 2000,
+          isClosable: true,
+        });
+        handleAbrirCarrito(); // recarga el contenido sin cerrar el drawer
       } else {
         setMensaje(data.message || 'No se pudo eliminar el producto');
       }
@@ -110,100 +147,126 @@ const Productos = () => {
     }
   };
 
-  // 💳 Crear orden en Laravel y redirigir a Flow
-  const pagarOrden = async () => {
-    try {
-      const response = await fetch(`${API_URL}/orden/crear`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({}) // puedes enviar vacío si Laravel no espera parámetros
+const pagarOrden = async () => {
+  try {
+    const response = await fetch(`${API_URL}/orden/crear`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+
+    const data = await response.json();
+    console.log('🔁 Respuesta de orden:', data); // Debug
+
+    if (response.ok && data.url_pago) {
+      toast.closeAll();
+      setTimeout(() => {
+        window.location.href = data.url_pago; // Redirección segura
+      }, 100); // Evita conflictos con animación del drawer
+    } else {
+      toast({
+        title: 'No se pudo iniciar el pago',
+        description: data.message || 'No se recibió la URL de Flow',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
       });
-
-      const data = await response.json();
-
-      if (response.ok && data.url_pago) {
-        console.log('🔗 Redirigiendo a:', data.url_pago);
-        window.location.href = data.url_pago;
-      } else {
-        setMensaje(data.message || 'No se pudo iniciar el pago');
-      }
-    } catch (err) {
-      console.error('❌ Error al pagar:', err);
-      setMensaje('Error al conectar con Flow');
     }
-  };
+  } catch (err) {
+    toast({
+      title: 'Error al conectar con Flow',
+      status: 'error',
+      duration: 3000,
+      isClosable: true,
+    });
+  }
+};
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Listado de Productos</h1>
+    <Box p={6}>
+      <Heading mb={6} color="blue.700">🛠️ Productos disponibles</Heading>
 
-      <button onClick={obtenerCarrito} style={{ marginBottom: '1rem' }}>
+      <Button colorScheme="teal" mb={6} onClick={handleAbrirCarrito}>
         Ver carrito 🛒
-      </button>
+      </Button>
 
-      {mensaje && <p style={{ color: 'green' }}>{mensaje}</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {mensaje && <Text color="green.500">{mensaje}</Text>}
+      {error && <Text color="red.500">{error}</Text>}
 
-      <ul>
+      <SimpleGrid columns={[1, 2, 3]} spacing={6}>
         {productos.map((producto) => (
-          <li
-            key={producto.id}
-            style={{
-              marginBottom: '1rem',
-              borderBottom: '1px solid #ccc',
-              paddingBottom: '1rem',
-            }}
-          >
-            <h3>{producto.nombre}</h3>
-            <p>{producto.descripcion}</p>
-            <p>
-              <strong>Precio:</strong>{' '}
-              ${parseInt(producto.precio).toLocaleString('es-CL')}
-            </p>
-            <p>
-              <strong>Stock:</strong> {producto.stock}
-            </p>
-            <button onClick={() => agregarAlCarrito(producto.id)}>
-              Agregar al carrito
-            </button>
-          </li>
+          <Card key={producto.id} borderWidth="1px" borderRadius="lg" overflow="hidden">
+            <CardBody>
+              <Image
+                src="https://via.placeholder.com/300x200?text=Producto"
+                alt={producto.nombre}
+                borderRadius="md"
+              />
+              <Stack mt="4" spacing="2">
+                <Heading size="md">{producto.nombre}</Heading>
+                <Text>{producto.descripcion}</Text>
+                <Text color="blue.600" fontWeight="bold">
+                  ${parseInt(producto.precio).toLocaleString('es-CL')}
+                </Text>
+                <Text fontSize="sm">Stock: {producto.stock}</Text>
+              </Stack>
+            </CardBody>
+            <CardFooter>
+              <Button colorScheme="blue" onClick={() => agregarAlCarrito(producto.id)}>
+                Agregar al carrito
+              </Button>
+            </CardFooter>
+          </Card>
         ))}
-      </ul>
+      </SimpleGrid>
 
-      {/* Mostrar productos del carrito */}
-      {mostrarCarrito && (
-        <div style={{ marginTop: '2rem' }}>
-          <h2>Carrito de compras</h2>
-          {carrito.length === 0 ? (
-            <p>Tu carrito está vacío</p>
-          ) : (
-            <>
-              <ul>
+      <Drawer isOpen={isOpen} placement="right" onClose={onClose} size="sm">
+        <DrawerOverlay />
+        <DrawerContent>
+          <DrawerHeader borderBottomWidth="1px">🛒 Tu carrito</DrawerHeader>
+          <DrawerBody>
+            {carrito.length === 0 ? (
+              <Text color="gray.500" mt={4}>Tu carrito está vacío</Text>
+            ) : (
+              <Stack spacing={4}>
                 {carrito.map((producto) => (
-                  <li key={producto.id}>
-                    {producto.nombre} - Cantidad: {producto.cantidad} - Subtotal: $
-                    {(producto.precio * producto.cantidad).toLocaleString('es-CL')}
-                    <button
+                  <Box
+                    key={producto.id}
+                    p={3}
+                    borderWidth="1px"
+                    borderRadius="md"
+                    bg="gray.50"
+                  >
+                    <Text fontWeight="bold">{producto.nombre}</Text>
+                    <Text fontSize="sm">
+                      Cantidad: {producto.cantidad} — Subtotal: $
+                      {(producto.precio * producto.cantidad).toLocaleString('es-CL')}
+                    </Text>
+                    <Button
+                      size="sm"
+                      mt={2}
+                      colorScheme="red"
                       onClick={() => eliminarDelCarrito(producto.id)}
-                      style={{ marginLeft: '1rem', color: 'red' }}
                     >
-                      ❌ Eliminar
-                    </button>
-                  </li>
+                      Eliminar
+                    </Button>
+                  </Box>
                 ))}
-              </ul>
-              <button onClick={pagarOrden} style={{ marginTop: '1rem' }}>
-                Ir a pagar 💳
-              </button>
-            </>
-          )}
-        </div>
-      )}
-    </div>
+              </Stack>
+            )}
+          </DrawerBody>
+          <DrawerFooter borderTopWidth="1px">
+            <Button colorScheme="green" onClick={pagarOrden} isDisabled={carrito.length === 0}>
+              Ir a pagar 💳
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    </Box>
   );
 };
 

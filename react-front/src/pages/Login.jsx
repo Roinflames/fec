@@ -1,4 +1,15 @@
 import { useState } from 'react';
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Heading,
+  Input,
+  Text,
+  VStack,
+  useToast,
+} from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,6 +18,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const toast = useToast();
   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
@@ -28,6 +40,12 @@ const Login = () => {
 
       if (response.ok && data.token) {
         login(data.token);
+        toast({
+          title: 'Inicio de sesión exitoso',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
         navigate('/');
       } else {
         setError(data.message || 'Error al iniciar sesión');
@@ -39,29 +57,43 @@ const Login = () => {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Iniciar Sesión</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <Box maxW="md" mx="auto" mt={10} p={6} borderWidth={1} borderRadius="lg" boxShadow="lg">
+      <Heading mb={6} textAlign="center" color="blue.700">Iniciar Sesión</Heading>
+
+      {error && (
+        <Text color="red.500" mb={4}>
+          {error}
+        </Text>
+      )}
+
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email:</label><br />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required />
-        </div>
-        <div>
-          <label>Contraseña:</label><br />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required />
-        </div>
-        <button type="submit">Iniciar sesión</button>
+        <VStack spacing={4} align="stretch">
+          <FormControl isRequired>
+            <FormLabel>Email</FormLabel>
+            <Input
+              type="email"
+              placeholder="correo@ferremas.cl"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Contraseña</FormLabel>
+            <Input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </FormControl>
+
+          <Button type="submit" colorScheme="blue" width="full">
+            Iniciar sesión
+          </Button>
+        </VStack>
       </form>
-    </div>
+    </Box>
   );
 };
 
