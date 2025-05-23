@@ -5,13 +5,14 @@ import Register from './pages/Register';
 import Carrito from './pages/Carrito';
 import Pago from './pages/Pago';
 import Productos from './pages/Productos';
+import Perfil from './pages/Perfil'; // ✅ Nuevo import
 import PrivateRoute from './components/PrivateRoute';
-import Navbar from './components/Navbar'; // ✅ importado
+import Navbar from './components/Navbar'; // ✅ Navbar fijo arriba
 
 function App() {
   return (
     <Router>
-      <Navbar /> {/* ✅ Navbar fijo arriba */}
+      <Navbar />
       <Routes>
         {/* Públicas */}
         <Route path="/" element={<Home />} />
@@ -43,9 +44,18 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/perfil" // ✅ Nueva ruta
+          element={
+            <PrivateRoute>
+              <Perfil />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </Router>
   );
 }
 
 export default App;
+

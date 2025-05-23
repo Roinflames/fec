@@ -16,6 +16,9 @@ const Home = () => {
             <Button as={Link} to="/productos" colorScheme="blue">
               Ver productos
             </Button>
+            <Button as={Link} to="/perfil" colorScheme="teal">
+              Mi Perfil
+            </Button>
             <Button colorScheme="red" onClick={logout}>
               Cerrar sesión
             </Button>

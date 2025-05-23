@@ -6,16 +6,14 @@ import {
   HStack,
   Spacer,
   useColorModeValue,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
+  Text,
 } from '@chakra-ui/react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
-  const { token, user, logout } = useAuth();
+  const { token, logout } = useAuth();
+  const user = JSON.parse(localStorage.getItem("user")); // ✅ obtiene el nombre directamente
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -41,7 +39,7 @@ const Navbar = () => {
 
         <Spacer />
 
-        <HStack spacing={4}>
+        <HStack spacing={4} alignItems="center">
           <Button as={RouterLink} to="/" variant="link" color="white">
             Inicio
           </Button>
@@ -74,24 +72,24 @@ const Navbar = () => {
               </Button>
             </>
           ) : (
-            user && (
-              <Menu>
-                <MenuButton
-                  as={Button}
-                  variant="outline"
-                  size="sm"
-                  colorScheme="whiteAlpha"
-                >
-                  👤 {user.name}
-                </MenuButton>
-                <MenuList>
-                  <MenuItem isDisabled>{user.email}</MenuItem>
-                  <MenuItem onClick={handleLogout} color="red.500">
-                    Cerrar sesión
-                  </MenuItem>
-                </MenuList>
-              </Menu>
-            )
+            <>
+              <Text
+                as={RouterLink}
+                to="/perfil"
+                fontWeight="bold"
+                _hover={{ textDecoration: 'underline', cursor: 'pointer' }}
+              >
+                👤 {user?.name || 'Usuario'}
+              </Text>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="sm"
+                colorScheme="whiteAlpha"
+              >
+                Cerrar sesión
+              </Button>
+            </>
           )}
         </HStack>
       </Flex>
