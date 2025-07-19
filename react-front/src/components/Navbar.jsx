@@ -16,9 +16,13 @@ const Navbar = () => {
   const user = JSON.parse(localStorage.getItem("user")); // ✅ obtiene el nombre directamente
   const navigate = useNavigate();
 
+  // const handleLogout = () => {
+  //   logout();
+  //   navigate('/');
+  // };
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    localStorage.removeItem('token'); // o el nombre que uses
+    navigate('/login');
   };
 
   return (
