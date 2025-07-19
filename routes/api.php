@@ -38,3 +38,6 @@ Route::middleware('auth:api')->group(function () {
 // Callback de Flow (exento de autenticación)
 Route::post('/flow/callback', [OrdenController::class, 'flowCallback']);
 Route::get('/flow/prueba', [OrdenController::class, 'crearPagoManualDePrueba']);
+
+
+
