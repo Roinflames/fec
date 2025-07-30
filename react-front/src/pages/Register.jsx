@@ -23,6 +23,7 @@ const Register = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const { login } = useAuth();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +40,7 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/register', {
+      const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
