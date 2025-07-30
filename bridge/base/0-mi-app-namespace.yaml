@@ -1,0 +1,8 @@
+#! 0-mi-app-namespace.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: mi-app
+    labels:
+        com.docker.compose.project: mi_app

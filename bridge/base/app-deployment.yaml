@@ -1,0 +1,137 @@
+#! app-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: app
+    namespace: mi-app
+    labels:
+        com.docker.compose.project: mi_app
+        com.docker.compose.service: app
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: mi_app
+            com.docker.compose.service: app
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: mi_app
+                com.docker.compose.service: app
+                com.docker.compose.network.default: "true"
+        spec:
+            containers:
+                - name: laravel-app
+                  image: mi_app-app
+                  imagePullPolicy: IfNotPresent
+                  command: [sh -c php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000]
+                  env:
+                    - name: APP_DEBUG
+                      value: "true"
+                    - name: APP_ENV
+                      value: "local"
+                    - name: APP_FAKER_LOCALE
+                      value: "en_US"
+                    - name: APP_FALLBACK_LOCALE
+                      value: "en"
+                    - name: APP_KEY
+                      value: "base64:kib8Nkbzw7eJmUto3xGaN6efl3CuXK2QvsqLJHO/XVk="
+                    - name: APP_LOCALE
+                      value: "en"
+                    - name: APP_MAINTENANCE_DRIVER
+                      value: "file"
+                    - name: APP_NAME
+                      value: "Laravel"
+                    - name: APP_URL
+                      value: "http://localhost:8000"
+                    - name: BCRYPT_ROUNDS
+                      value: "12"
+                    - name: BROADCAST_CONNECTION
+                      value: "log"
+                    - name: CACHE_STORE
+                      value: "database"
+                    - name: DB_CONNECTION
+                      value: "pgsql"
+                    - name: DB_DATABASE
+                      value: "laravel_db"
+                    - name: DB_HOST
+                      value: "db"
+                    - name: DB_PASSWORD
+                      value: "laravel_pass"
+                    - name: DB_PORT
+                      value: "5432"
+                    - name: DB_USERNAME
+                      value: "laravel_user"
+                    - name: FILESYSTEM_DISK
+                      value: "local"
+                    - name: FLOW_API_KEY
+                      value: "1F522BCF-2CB5-45F9-8EA4-8016C933L426"
+                    - name: FLOW_API_URL
+                      value: "https://sandbox.flow.cl/api/payment/create"
+                    - name: FLOW_COMMERCE_ID
+                      value: "demo123"
+                    - name: FLOW_CONFIRMATION_URL
+                      value: "https://comunidadvirtual.cl/notificacion.php"
+                    - name: FLOW_CURRENCY
+                      value: "CLP"
+                    - name: FLOW_RETURN_URL
+                      value: "https://comunidadvirtual.cl/retorno.php"
+                    - name: FLOW_SECRET
+                      value: "8d7c176d79c7811e3406cab4edb699914d6341ce"
+                    - name: FLOW_SUBJECT
+                      value: "Pago Ferremas"
+                    - name: FLOW_TEST_EMAIL
+                      value: "rod.reyes.s@gmail.com"
+                    - name: JWT_SECRET
+                      value: "ZuvjwxyMTxj7D8d1En29n3ggRDrreysHdQy7hAfThw49JpJKhqjTXcpOn42rjGmv"
+                    - name: LOG_CHANNEL
+                      value: "stack"
+                    - name: LOG_LEVEL
+                      value: "debug"
+                    - name: MAIL_FROM_ADDRESS
+                      value: "hello@example.com"
+                    - name: MAIL_FROM_NAME
+                      value: "Laravel"
+                    - name: MAIL_HOST
+                      value: "127.0.0.1"
+                    - name: MAIL_MAILER
+                      value: "log"
+                    - name: MAIL_PASSWORD
+                      value: "null"
+                    - name: MAIL_PORT
+                      value: "2525"
+                    - name: MAIL_USERNAME
+                      value: "null"
+                    - name: PHP_CLI_SERVER_WORKERS
+                      value: "4"
+                    - name: QUEUE_CONNECTION
+                      value: "database"
+                    - name: REDIS_CLIENT
+                      value: "phpredis"
+                    - name: REDIS_HOST
+                      value: "127.0.0.1"
+                    - name: REDIS_PASSWORD
+                      value: "null"
+                    - name: REDIS_PORT
+                      value: "6379"
+                    - name: SESSION_DRIVER
+                      value: "database"
+                    - name: SESSION_ENCRYPT
+                      value: "false"
+                    - name: SESSION_LIFETIME
+                      value: "120"
+                  ports:
+                    - name: app-8000
+                      containerPort: 8000
+                    - name: app-9000
+                      containerPort: 9000
+                  volumeMounts:
+                    - name: var-www
+                      mountPath: /var/www
+            volumes:
+                - name: var-www
+                  hostPath:
+                    path: /Users/diegomartinez/Desktop/mi_app
