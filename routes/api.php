@@ -12,9 +12,9 @@ Route::get('/debug-productos', function () {
     return \App\Models\Producto::all();
 });
 
-// Autenticación
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login',    [AuthController::class, 'login']);
+// Autenticación con Throttle o rate-limit (muy recomendado)
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+Route::post('/login',    [AuthController::class, 'login'])->middleware('throttle:10,1');
 
 // Rutas protegidas con auth:api
 Route::middleware('auth:api')->group(function () {

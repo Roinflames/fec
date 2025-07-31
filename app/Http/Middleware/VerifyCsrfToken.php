@@ -14,6 +14,6 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         'register',
         'login',
-        // agrega más rutas si es necesario
+        'flow/callback',
     ];
 }
