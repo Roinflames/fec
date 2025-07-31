@@ -6,6 +6,9 @@ docker stop en windows:
     for /f "tokens=*" %i in ('docker ps -q') do docker stop %i
 
 <!-- Backend -->
+php artisan --version
+Laravel Framework 12.14.1
+
 docker compose logs app
 
 ```bash
