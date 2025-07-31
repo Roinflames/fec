@@ -34,3 +34,4 @@ php artisan vendor:publish --tag="cors"
 docker build -t react-front .
 docker run -p 5173:80 react-front
 
+
