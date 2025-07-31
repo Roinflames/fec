@@ -1,29 +1,44 @@
-FROM php:8.2-fpm
+# Etapa 1: Build de dependencias
+FROM composer:2 AS vendor
 
-# Instala extensiones necesarias
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --prefer-dist --optimize-autoloader
+
+# Etapa 2: Imagen PHP con Apache
+FROM php:8.2-apache
+
+# Instalar extensiones de PHP necesarias para Laravel
 RUN apt-get update && apt-get install -y \
-    git curl zip unzip libpng-dev libonig-dev libxml2-dev \
-    libpq-dev libzip-dev \
-    && docker-php-ext-install pdo pdo_pgsql mbstring zip
+    git unzip zip libpq-dev libzip-dev libonig-dev \
+    && docker-php-ext-install pdo pdo_pgsql zip
 
-# Instala Composer
-COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
+# Habilitar mod_rewrite
+RUN a2enmod rewrite
 
-# Establece el directorio de trabajo
-WORKDIR /var/www
+# Copiar dependencias de Laravel
+COPY --from=vendor /app/vendor /var/www/html/vendor
 
-# Copia archivos del proyecto
-COPY . .
+# Copiar aplicación Laravel al contenedor
+COPY . /var/www/html
 
-# Instala dependencias PHP
-RUN composer install --no-dev --optimize-autoloader
+# Establecer permisos para Laravel
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Permisos y cache
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www/storage
+# Establecer directorio de trabajo
+WORKDIR /var/www/html
 
-# Exponer puerto Laravel
-EXPOSE 8000
+# Configuración por defecto de Apache
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 
-# Usar CMD con formato JSON para evitar warning
-CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000"]
+# Actualizar el VirtualHost
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# Puerto expuesto por Apache
+EXPOSE 80
+
+# Comando de inicio
+CMD ["apache2-foreground"]
