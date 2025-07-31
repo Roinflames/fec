@@ -1,0 +1,33 @@
+<!-- Docker -->
+docker compose down
+docker compose up -d
+docker stop $(docker ps -q)
+docker stop en windows:
+    for /f "tokens=*" %i in ('docker ps -q') do docker stop %i
+
+<!-- Backend -->
+docker compose logs app
+
+```bash
+laravel_app  | 
+laravel_app  | Warning: require(/var/www/vendor/autoload.php): Failed to open stream: No such file or directory in /var/www/artisan on line 10
+laravel_app  | 
+laravel_app  | Fatal error: Uncaught Error: Failed opening required '/var/www/vendor/autoload.php' (include_path='.:/usr/local/lib/php') in /var/www/artisan:10
+laravel_app  | Stack trace:
+laravel_app  | #0 {main}
+laravel_app  |   thrown in /var/www/artisan on line 10
+```
+
+docker compose run --rm app composer install
+docker compose run --rm app php artisan key:generate
+docker restart laravel_app
+
+<!-- CORS -->
+docker exec -it laravel_app bash
+composer require fruitcake/laravel-cors
+php artisan vendor:publish --tag="cors"
+
+<!-- Frontend -->
+docker build -t react-front .
+docker run -p 5173:80 react-front
+
