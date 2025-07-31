@@ -4,7 +4,7 @@ FROM composer:2 AS vendor
 WORKDIR /app
 
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --optimize-autoloader
+RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --verbose
 
 # Etapa 2: Imagen PHP con Apache
 FROM php:8.2-apache
