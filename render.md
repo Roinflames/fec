@@ -1,31 +1,22 @@
-✅ 2. Cambios básicos en tu proyecto Laravel
-2.1. Procfile para Render
-php artisan serve --host 0.0.0.0 --port 8000
- 
-2.2. Asegúrate de tener SQLite o PostgreSQL en .env
-DB_CONNECTION=sqlite
-DB_DATABASE=/etc/database/database.sqlite
+# Deploy en Render (Laravel + Inertia React) con Docker
 
-DB_CONNECTION=pgsql
-DB_HOST=YOUR_DB_HOST
-DB_PORT=5432
-DB_DATABASE=YOUR_DB_NAME
-DB_USERNAME=YOUR_DB_USER
-DB_PASSWORD=YOUR_DB_PASS
- 
-3.1. Ir a: https://dashboard.render.com
-build command:
- composer install --no-dev
+## Recomendación
+- Usar `render.yaml` incluido en este repo (Blueprint deploy con Docker).
 
-start command:
-php artisan serve --host 0.0.0.0 --port 8000
+## Variables de entorno mínimas (Render Dashboard)
+- `APP_KEY` (obligatoria, generada una sola vez).
+- `APP_URL` (URL pública de tu servicio en Render).
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `LOG_CHANNEL=stderr`
+- `INERTIA_SSR_ENABLED=false`
+- Variables de base de datos (`DB_*`) usando PostgreSQL de Render.
 
-3.2. Genera APP_KEY automáticamente
-build command:
-composer install --no-dev && php artisan key:generate
+## Nota importante de Inertia
+- Si `INERTIA_SSR_ENABLED=true` y no corres el servidor SSR, fallará al llegar a `Inertia::render(...)`.
+- En Render estándar, dejar `INERTIA_SSR_ENABLED=false`.
 
-✅ 4. Habilita CORS para tu frontend en Vercel
-'paths' => ['api/*', 'sanctum/csrf-cookie'],
-'allowed_origins' => ['https://tudominio.vercel.app'],
-
-✅ 5. Verifica el deploy y prueba desde el frontend
+## Arranque del contenedor
+- El contenedor ejecuta:
+  - `php artisan migrate --force`
+  - `php artisan serve --host 0.0.0.0 --port ${PORT:-10000}`

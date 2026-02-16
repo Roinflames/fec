@@ -1,34 +1,36 @@
-# Etapa 1: Build de dependencias
-FROM composer:2 AS vendor
-
-WORKDIR /app
-
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --verbose
-
-# Etapa 2: Imagen PHP con Apache
-FROM php:8.2-apache
-
-RUN apt-get update && apt-get install -y \
-    git unzip zip libpq-dev libzip-dev libonig-dev \
-    && docker-php-ext-install pdo pdo_pgsql zip
-
-RUN a2enmod rewrite
-
-COPY --from=vendor /app/vendor /var/www/html/vendor
-
-COPY . /var/www/html
-
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+FROM php:8.2-cli
 
 WORKDIR /var/www/html
 
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    unzip \
+    zip \
+    libpq-dev \
+    libzip-dev \
+    libonig-dev \
+    ca-certificates \
+    gnupg \
+    && docker-php-ext-install pdo pdo_pgsql zip \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-EXPOSE 80
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-CMD ["apache2-foreground"]
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+RUN chmod -R 775 storage bootstrap/cache
+
+EXPOSE 10000
+
+CMD ["sh", "-lc", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]

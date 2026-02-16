@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: fec-app
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: INERTIA_SSR_ENABLED
+        value: "false"

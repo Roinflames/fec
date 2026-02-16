@@ -1,4 +1,8 @@
-react-front/sgit add node_modules
+node_modules
 vendor
 .env
 .git
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
