@@ -19,14 +19,10 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-COPY package.json package-lock.json ./
-RUN npm ci
-
 COPY . .
 
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN npm ci
 RUN npm run build
 
 RUN chmod -R 775 storage bootstrap/cache
