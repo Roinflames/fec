@@ -1,0 +1,19 @@
+version: 1
+
+defaults:
+  deploy_auto: true
+  required_files:
+    - AGENTS.md
+    - ROLE.md
+    - render.yaml
+    - Procfile
+  required_line_checks:
+    - .env.example::INERTIA_SSR_ENABLED=false
+
+roles:
+  fullstack:
+    role_title: "Ingeniero fullstack enfocado en estabilidad de producción"
+  backend:
+    role_title: "Ingeniero backend enfocado en Laravel, datos y despliegues"
+  frontend:
+    role_title: "Ingeniero frontend enfocado en Inertia/React y UX funcional"
