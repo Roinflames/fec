@@ -39,4 +39,4 @@ RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 10000
 
-CMD ["sh", "-lc", "for i in 1 2 3; do php artisan migrate --force && break; echo \"migrate intento $i fallo, reintentando...\"; sleep 5; done; php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
+CMD ["sh", "-lc", "if [ \"${RUN_MIGRATIONS_ON_BOOT:-false}\" = \"true\" ]; then for i in 1 2 3; do php artisan migrate --force && break; echo \"migrate intento $i fallo, reintentando...\"; sleep 5; done; fi; php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]

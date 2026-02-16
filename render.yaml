@@ -16,3 +16,5 @@ services:
         value: "false"
       - key: DB_SSLMODE
         value: require
+      - key: RUN_MIGRATIONS_ON_BOOT
+        value: "false"
