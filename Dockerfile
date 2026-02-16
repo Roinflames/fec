@@ -21,7 +21,17 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV COMPOSER_MEMORY_LIMIT=-1
+
+RUN composer install \
+    --no-dev \
+    --prefer-dist \
+    --no-progress \
+    --no-interaction \
+    --optimize-autoloader \
+    --no-scripts
+RUN php artisan package:discover --ansi
 RUN npm ci
 RUN npm run build
 
