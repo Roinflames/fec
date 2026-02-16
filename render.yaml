@@ -14,3 +14,5 @@ services:
         value: stderr
       - key: INERTIA_SSR_ENABLED
         value: "false"
+      - key: DB_SSLMODE
+        value: require
